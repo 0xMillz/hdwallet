@@ -12,6 +12,7 @@ import {
 import { isKeepKey } from '@shapeshiftoss/hdwallet-keepkey'
 import { isPortis } from '@shapeshiftoss/hdwallet-portis'
 
+import { LedgerBLEAdapter } from '@shapeshiftoss/hdwallet-ledger-bluetooth'
 import { WebUSBKeepKeyAdapter } from '@shapeshiftoss/hdwallet-keepkey-webusb'
 import { TCPKeepKeyAdapter } from '@shapeshiftoss/hdwallet-keepkey-tcp'
 import { TrezorAdapter } from '@shapeshiftoss/hdwallet-trezor-connect'
@@ -24,14 +25,12 @@ import {
   BTCOutputAddressType,
 } from '@shapeshiftoss/hdwallet-core/src/bitcoin'
 
-import * as btcBech32TxJson from './json/btcBech32Tx.json'
-import * as btcTxJson from './json/btcTx.json'
-import * as btcSegWitTxJson from './json/btcSegWitTx.json'
-import * as dashTxJson from './json/dashTx.json'
-import * as dogeTxJson from './json/dogeTx.json'
-import * as ltcTxJson from './json/ltcTx.json'
-
-import Portis from "@portis/web3";
+// import * as btcBech32TxJson from './json/btcBech32Tx.json'
+// import * as btcTxJson from './json/btcTx.json'
+// import * as btcSegWitTxJson from './json/btcSegWitTx.json'
+// import * as dashTxJson from './json/dashTx.json'
+// import * as dogeTxJson from './json/dogeTx.json'
+// import * as ltcTxJson from './json/ltcTx.json'
 
 const keyring = new Keyring()
 
@@ -57,7 +56,8 @@ const trezorAdapter = TrezorAdapter.useKeyring(keyring, {
   }
 })
 
-const ledgerAdapter = WebUSBLedgerAdapter.useKeyring(keyring)
+const ledgerWebUSBAdapter = WebUSBLedgerAdapter.useKeyring(keyring)
+const ledgerBluetoothAdapter = LedgerBLEAdapter.useKeyring(keyring)
 
 window['keyring'] = keyring
 
@@ -70,7 +70,8 @@ window['wallet'] = wallet
 const $keepkey = $('#keepkey')
 const $kkemu = $('#kkemu')
 const $trezor = $('#trezor')
-const $ledger = $('#ledger')
+const $ledgerWebUSB = $('#ledgerWebUSB')
+const $ledgerBLE = $('#ledgerBLE')
 const $portis = $('#portis')
 const $keyring = $('#keyring')
 
@@ -98,9 +99,16 @@ $trezor.on('click', async (e) => {
   $('#keyring select').val(await wallet.getDeviceID())
 })
 
-$ledger.on('click', async (e) => {
+$ledgerWebUSB.on('click', async (e) => {
   e.preventDefault()
-  wallet = await ledgerAdapter.pairDevice()
+  wallet = await ledgerWebUSBAdapter.pairDevice()
+  window['wallet'] = wallet
+  $('#keyring select').val(await wallet.getDeviceID())
+})
+
+$ledgerBLE.on('click', async (e) => {
+  e.preventDefault()
+  wallet = await ledgerBluetoothAdapter.pairDevice()
   window['wallet'] = wallet
   $('#keyring select').val(await wallet.getDeviceID())
 })
@@ -144,7 +152,7 @@ async function deviceConnected (deviceId) {
   }
 
   try {
-    await ledgerAdapter.initialize()
+    await ledgerWebUSBAdapter.initialize()
   } catch (e) {
     console.error('Could not initialize LedgerAdapter', e)
   }
