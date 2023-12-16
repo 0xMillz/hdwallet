@@ -9,22 +9,22 @@ afterEach(() => expect(mswMock).not.toHaveBeenCalled());
 
 const untouchable = require("untouchableMock");
 
-describe("NativeThorchainWalletInfo", () => {
+describe("NativeMayachainWalletInfo", () => {
   const info = native.info();
 
   it("should return some static metadata", async () => {
-    await expect(untouchable.call(info, "mayaSupportsNetwork")).resolves.toBe(true);
-    await expect(untouchable.call(info, "mayaSupportsSecureTransfer")).resolves.toBe(false);
-    expect(untouchable.call(info, "mayaSupportsNativeShapeShift")).toBe(false);
+    await expect(untouchable.call(info, "mayachainSupportsNetwork")).resolves.toBe(true);
+    await expect(untouchable.call(info, "mayachainSupportsSecureTransfer")).resolves.toBe(false);
+    expect(untouchable.call(info, "mayachainSupportsNativeShapeShift")).toBe(false);
   });
 
   it("should return the correct account paths", async () => {
-    const paths = info.mayaGetAccountPaths({ accountIdx: 0 });
+    const paths = info.mayachainGetAccountPaths({ accountIdx: 0 });
     expect(paths).toMatchObject([{ addressNList: core.bip32ToAddressNList("m/44'/931'/0'/0/0") }]);
   });
 
   it("does not support getting the next account path", async () => {
-    expect(untouchable.call(info, "mayaNextAccountPath", {})).toBe(undefined);
+    expect(untouchable.call(info, "mayachainNextAccountPath", {})).toBe(undefined);
   });
 });
 
@@ -37,32 +37,32 @@ describe("NativeThorchainWallet", () => {
     await expect(wallet.initialize()).resolves.toBe(true);
   });
 
-  it("should generate a correct maya address", async () => {
+  it("should generate a correct mayachain address", async () => {
     await expect(
-      wallet.mayaGetAddress({ addressNList: core.bip32ToAddressNList("m/44'/931'/0'/0/0") })
-    ).resolves.toBe("thor1ujumx36gj3jv33gcw49dfafdddza3kdcd38paq");
+      wallet.mayachainGetAddress({ addressNList: core.bip32ToAddressNList("m/44'/931'/0'/0/0") })
+    ).resolves.toBe("maya1ujumx36gj3jv33gcw49dfafdddza3kdcdxedts");
   });
 
-  it("should generate another correct maya address", async () => {
+  it("should generate another correct mayachain address", async () => {
     await expect(
-      wallet.mayaGetAddress({ addressNList: core.bip32ToAddressNList("m/44'/931'/1337'/123/4") })
-    ).resolves.toBe("thor14hqwsy4qpwzsdk2l3h3q82eghg4ctaa38rx63g");
+      wallet.mayachainGetAddress({ addressNList: core.bip32ToAddressNList("m/44'/931'/1337'/123/4") })
+    ).resolves.toBe("maya14hqwsy4qpwzsdk2l3h3q82eghg4ctaa385ck8c");
   });
 
   it("should sign a transaction correctly", async () => {
-    const signed = await wallet.mayaSignTx({
+    const signed = await wallet.mayachainSignTx({
       addressNList: core.bip32ToAddressNList("m/44'/931'/0'/0/0"),
       tx: {
         msg: [
           {
-            type: "maya/MsgSend",
+            type: "mayachain/MsgSend",
             value: {
-              from_address: "thor1ujumx36gj3jv33gcw49dfafdddza3kdcd38paq",
-              to_address: "thor14hqwsy4qpwzsdk2l3h3q82eghg4ctaa38rx63g",
+              from_address: "maya1ujumx36gj3jv33gcw49dfafdddza3kdcdxedts",
+              to_address: "maya14hqwsy4qpwzsdk2l3h3q82eghg4ctaa385ck8c",
               amount: [
                 {
-                  denom: "rune",
-                  amount: "123456",
+                  denom: "cacao",
+                  amount: "12345678",
                 },
               ],
             },
@@ -72,10 +72,10 @@ describe("NativeThorchainWallet", () => {
           amount: [],
           gas: "1000000",
         },
-        memo: "hdwallet maya test",
+        memo: "hdwallet mayachain test",
         signatures: [],
       },
-      chain_id: "maya-mainnet-v1",
+      chain_id: "mayachain-mainnet-v1",
       account_number: "2722",
       sequence: "11",
     });

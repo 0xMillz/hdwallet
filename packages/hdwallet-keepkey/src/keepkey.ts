@@ -9,6 +9,7 @@ import * as Btc from "./bitcoin";
 import * as Cosmos from "./cosmos";
 import * as Eos from "./eos";
 import * as Eth from "./ethereum";
+import * as Mayachain from "./mayachain";
 import * as Osmosis from "./osmosis";
 import * as Ripple from "./ripple";
 import * as Thorchain from "./thorchain";
@@ -284,6 +285,45 @@ function describeThorchainPath(path: core.BIP32Path): core.PathDescription {
   };
 }
 
+function describeMayachainPath(path: core.BIP32Path): core.PathDescription {
+  const pathStr = core.addressNListToBIP32(path);
+  const unknown: core.PathDescription = {
+    verbose: pathStr,
+    coin: "Cacao",
+    isKnown: false,
+  };
+
+  if (path.length != 5) {
+    return unknown;
+  }
+
+  if (path[0] != 0x80000000 + 44) {
+    return unknown;
+  }
+
+  if (path[1] != 0x80000000 + core.slip44ByCoin("Cacao")) {
+    return unknown;
+  }
+
+  if ((path[2] & 0x80000000) >>> 0 !== 0x80000000) {
+    return unknown;
+  }
+
+  if (path[3] !== 0 || path[4] !== 0) {
+    return unknown;
+  }
+
+  const index = path[2] & 0x7fffffff;
+  return {
+    verbose: `MAYAChain Account #${index}`,
+    accountIdx: index,
+    wholeAccount: true,
+    coin: "Cacao",
+    isKnown: true,
+    isPrefork: false,
+  };
+}
+
 function describeEosPath(path: core.BIP32Path): core.PathDescription {
   const pathStr = core.addressNListToBIP32(path);
   const unknown: core.PathDescription = {
@@ -410,7 +450,9 @@ export class KeepKeyHDWalletInfo
     core.BinanceWalletInfo,
     core.RippleWalletInfo,
     core.EosWalletInfo,
-    core.ThorchainWalletInfo
+    core.ThorchainWalletInfo,
+    core.MayachainWalletInfo
+  
 {
   readonly _supportsBTCInfo = true;
   readonly _supportsETHInfo = true;
@@ -420,6 +462,7 @@ export class KeepKeyHDWalletInfo
   readonly _supportsBinanceInfo = true;
   readonly _supportsEosInfo = true;
   readonly _supportsThorchainInfo = true;
+  readonly _supportsMayachainInfo = true;
 
   public getVendor(): string {
     return "KeepKey";
@@ -479,6 +522,10 @@ export class KeepKeyHDWalletInfo
 
   public thorchainGetAccountPaths(msg: core.ThorchainGetAccountPaths): Array<core.ThorchainAccountPath> {
     return Thorchain.thorchainGetAccountPaths(msg);
+  }
+
+  public mayachainGetAccountPaths(msg: core.MayachainGetAccountPaths): Array<core.MayachainAccountPath> {
+    return Mayachain.mayachainGetAccountPaths(msg);
   }
 
   public rippleGetAccountPaths(msg: core.RippleGetAccountPaths): Array<core.RippleAccountPath> {
@@ -633,6 +680,21 @@ export class KeepKeyHDWalletInfo
     };
   }
 
+  public mayachainNextAccountPath(msg: core.MayachainAccountPath): core.MayachainAccountPath | undefined {
+    const description = describeMayachainPath(msg.addressNList);
+    if (!description.isKnown) {
+      return undefined;
+    }
+
+    const addressNList = msg.addressNList;
+    addressNList[2] += 1;
+
+    return {
+      ...msg,
+      addressNList,
+    };
+  }
+
   public rippleNextAccountPath(msg: core.RippleAccountPath): core.RippleAccountPath | undefined {
     const description = describeRipplePath(msg.addressNList);
     if (!description.isKnown) {
@@ -707,6 +769,8 @@ export class KeepKeyHDWallet implements core.HDWallet, core.BTCWallet, core.ETHW
   readonly _supportsFio = false;
   readonly _supportsThorchainInfo = true;
   readonly _supportsThorchain = true;
+  readonly _supportsMayachainInfo = true;
+  readonly _supportsMayachain = true;
   readonly _supportsSecretInfo = false;
   readonly _supportsSecret = false;
   readonly _supportsKava = false;
@@ -1072,6 +1136,7 @@ export class KeepKeyHDWallet implements core.HDWallet, core.BTCWallet, core.ETHW
     this._supportsBinance = semver.gte(fwVersion, "v6.4.0");
     this._supportsEos = semver.gte(fwVersion, "v6.4.0");
     // this._supportsThorchain = semver.get(fwVersion, "v7.3.0");
+    // this._supportsMayachain = semver.get(fwVersion, "v7.3.0");
 
     this.cacheFeatures(out);
     return out;
@@ -1311,6 +1376,18 @@ export class KeepKeyHDWallet implements core.HDWallet, core.BTCWallet, core.ETHW
 
   public thorchainSignTx(msg: core.ThorchainSignTx): Promise<core.ThorchainSignedTx> {
     return Thorchain.thorchainSignTx(this.transport, msg);
+  }
+
+  public mayachainGetAccountPaths(msg: core.MayachainGetAccountPaths): Array<core.MayachainAccountPath> {
+    return this.info.mayachainGetAccountPaths(msg);
+  }
+
+  public mayachainGetAddress(msg: core.MayachainGetAddress): Promise<string | null> {
+    return Mayachain.mayachainGetAddress(this.transport, msg);
+  }
+
+  public mayachainSignTx(msg: core.MayachainSignTx): Promise<core.MayachainSignedTx> {
+    return Mayachain.mayachainSignTx(this.transport, msg);
   }
 
   public binanceGetAccountPaths(msg: core.BinanceGetAccountPaths): Array<core.BinanceAccountPath> {
