@@ -187,10 +187,10 @@ class NativeHDWalletInfo
         return core.fioDescribePath(msg.path);
       case "arkeo":
         return core.arkeoDescribePath(msg.path);
-      case "cacap":
+      case "cacao":
       case "scacao":
       case "mayachain":
-        return core.,mayachainDescribePath(msg.path);
+        return core.mayachainDescribePath(msg.path);
       default:
         throw new Error("Unsupported path");
     }
