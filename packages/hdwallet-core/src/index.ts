@@ -11,6 +11,7 @@ export * from "./exceptions";
 export * from "./fio";
 export * from "./kava";
 export * from "./keyring";
+export * from "./mayachain";
 export * from "./ripple";
 export * from "./secret";
 export * from "./terra";
